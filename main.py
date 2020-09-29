@@ -2,13 +2,18 @@ import gi
 import sys
 gi.require_version("Gtk", "3.0")
 gi.require_version('Gst', '1.0')
-from gi.repository import Gtk, Gst
+from gi.repository import Gtk, Gst, GLib
 from pathlib import Path
 
 from player import Player
 # Python templates
 from template.fileChooser import FileChooser
 
+
+import time
+
+# This is the refresh time of slider in milliseconds
+SLIDER_REFRESH = 1000
 
 # Python templates
 
@@ -20,7 +25,7 @@ class PlayerUI:
         
         # Initialize Player Backend
         self.player = Player()
-        
+
 
         # search for the widget with id
         # main window
@@ -35,9 +40,21 @@ class PlayerUI:
         # headerbar
         self.headerBar = builder.get_object("headerBar")
 
+
+        # slider seeker
+        self.seeker = builder.get_object("seeker")
+        self.durationText = builder.get_object("duration")
+
+
         # icons
         self.playIco = builder.get_object("playIco")
         self.pauseIco = builder.get_object("pauseIco")
+
+
+        # UI 
+        window.set_title("Python Gtk Player")
+        
+        
 
         # Connect Signals Here
         # window signals
@@ -50,12 +67,17 @@ class PlayerUI:
         self.playlistBox.connect("row-activated", self.onSelectionChange)
 
 
+        self.sliderHandlerId = self.seeker.connect("value-changed", self.onSliderSeek)
+        
+
+
         # misc
 
         # show window and initialize player gui
         window.show()
         Gtk.main()
 
+    # Used to add items in Playlist View
     def refreshPlaylist(self, playlist, listBox):
         for location in playlist:
             row = Gtk.ListBoxRow()
@@ -79,6 +101,41 @@ class PlayerUI:
             self.playBtn.set_label("Pause")
             self.playBtn.set_image(self.pauseIco)
 
+    def refreshSlider(self):
+        
+        if self.player.status != Gst.State.PLAYING:
+            return False  # cancel timeout
+        else:
+            success, duration = self.player.playbin.query_duration(Gst.Format.TIME)
+            if not success:
+                print("Error Occured")
+                return False
+            else:
+                self.seeker.set_range(0, duration / Gst.SECOND)
+            #fetching the position, in nanosecs
+            success, position = self.player.playbin.query_position(Gst.Format.TIME)
+            
+            if not success:
+                print("Couldn't fetch current song position to update slider")
+                return False
+
+                            
+            # converts to seconds
+            d = float(duration) / Gst.SECOND
+            p = float(position) / Gst.SECOND
+
+            durationToShow = str(time.strftime("%M:%S", time.gmtime(d)))
+            postionToShow = str(time.strftime("%M:%S", time.gmtime(p)))
+            self.durationText.set_label(postionToShow+"/"+durationToShow)
+
+            # block seek handler so we don't seek when we set_value() or else audio will break 
+            self.seeker.handler_block(self.sliderHandlerId)
+            self.seeker.set_value(p)
+            self.seeker.handler_unblock(self.sliderHandlerId)
+                    
+            return True  # continue calling every SLIDER_REFRESH milliseconds
+
+
     # Handle Signals Here
     def onDestroy(self, *args):
         Gtk.main_quit()
@@ -89,9 +146,11 @@ class PlayerUI:
             print("Select a Song First")
         elif(self.player.status != Gst.State.PLAYING):
             self.player.play()
+            GLib.timeout_add(SLIDER_REFRESH, self.refreshSlider)
         else:
             self.player.pause()
         self.refreshIcons()
+
 
 
     def onChooseClick(self, window):
@@ -104,15 +163,20 @@ class PlayerUI:
         selected_song = getattr(row, "path")
         name = getattr(row, "name")
         rowBox = row.get_child()
-        print(rowBox)
-        print(rowBox.get_center_widget())
         selected_song = Gst.filename_to_uri(selected_song)
-        if(self.player.current != selected_song):
-            self.player.stop()
-            self.player.setUri(selected_song)
-            self.player.play()
-            self.headerBar.set_title(name)
-        self.refreshIcons()
+        self.player.setUri(selected_song)
+        self.headerBar.set_title(name)
+        
+        self.onPlay(button=None)
+        
+
+     
+    def onSliderSeek(self, slider):
+        seek_time_secs = self.seeker.get_value()
+        self.player.playbin.seek_simple(Gst.Format.TIME,  Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT, seek_time_secs * Gst.SECOND)
+
+
+
 
 
 def main(args):

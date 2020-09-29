@@ -21,7 +21,7 @@ class Player:
         self.playbin.set_state(Gst.State.READY)
         self.status = Gst.State.READY
         self.current = None
-
+        self.duration = 0
         bus = self.playbin.get_bus()
         bus.add_signal_watch()
         bus.connect("message", self.bus_call)
@@ -32,31 +32,40 @@ class Player:
         t = message.type
         if t == Gst.MessageType.EOS:
             sys.stdout.write("End-of-stream\n")
-            self.playbin.set_state(Gst.State.NULL)
+            self.changeState(Gst.State.NULL)
         elif t == Gst.MessageType.ERROR:
             err, debug = message.parse_error()
             print("Error While PLaying: ", err)
-            self.playbin.set_state(Gst.State.NULL)
+            self.changeState(Gst.State.NULL)
 
 
     def setUri(self, uri):
+        self.changeState(Gst.State.NULL)
         self.playbin.set_property("uri", uri)
         self.current = uri
 
+
     def play(self):
-        self.playbin.set_state(Gst.State.PLAYING)    
-        self.status = Gst.State.PLAYING
+        self.changeState(Gst.State.PLAYING)
 
     def pause(self):
-        self.playbin.set_state(Gst.State.PAUSED)
-        self.status = Gst.State.PAUSED
+        self.changeState(Gst.State.PAUSED)
 
 
     def stop(self):
-        self.playbin.set_state(Gst.State.NULL)
-        self.status = Gst.State.NULL
+        self.changeState(Gst.State.NULL)
 
 
+    def changeState(self, state):
+        self.playbin.set_state(state)
+        self.status = state
+
+    def getDuration(self):
+        success, self.duration = self.player.playbin.query_duration(Gst.Format.TIME)
+
+
+    def seek(self, location):
+        pass
 
 
 

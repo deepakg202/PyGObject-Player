@@ -10,6 +10,5 @@
 6. Execute `python main.py`
 --
 
-This is a very basic gtk app to play audio files (for now) so don't expect much from it
-
+I have not tested it on linux but the packages described above should be installed (without the `mingw-w64-x86_64-` part) using the package manager and it should probably work.
 
