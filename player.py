@@ -74,7 +74,7 @@ class Player:
         pass
 
     def seek(self, location):
-        pass
+        self.playbin.seek_simple(Gst.Format.TIME,  Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT, location * Gst.SECOND)
 
     def validateUri(self, uri):
         return Gst.uri_is_valid(uri)

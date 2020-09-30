@@ -54,8 +54,6 @@ class PlayerUI:
         # UI 
         window.set_title("Python Gtk Player")
         
-        
-
         # Connect Signals Here
         # window signals
         window.connect("destroy", self.onDestroy)
@@ -66,11 +64,8 @@ class PlayerUI:
 
         self.playlistBox.connect("row-activated", self.onSelectionChange)
 
-
         self.sliderHandlerId = self.seeker.connect("value-changed", self.onSliderSeek)
         
-
-
         # misc
 
         # show window and initialize player gui
@@ -118,7 +113,6 @@ class PlayerUI:
             if not success:
                 print("Couldn't fetch current song position to update slider")
                 return False
-
                             
             # converts to seconds
             d = float(duration) / Gst.SECOND
@@ -166,17 +160,10 @@ class PlayerUI:
         selected_song = Gst.filename_to_uri(selected_song)
         self.player.setUri(selected_song)
         self.headerBar.set_title(name)
-        
         self.onPlay(button=None)
         
-
-     
     def onSliderSeek(self, slider):
-        seek_time_secs = self.seeker.get_value()
-        self.player.playbin.seek_simple(Gst.Format.TIME,  Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT, seek_time_secs * Gst.SECOND)
-
-
-
+        self.player.seek(self.seeker.get_value())
 
 
 def main(args):
