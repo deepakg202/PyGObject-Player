@@ -10,8 +10,6 @@ class Player:
     def __init__(self):
         Gst.init(None)
 
-        self.cli = False  # Used to differemtiate between gui and cli
-
         self.playbin = Gst.ElementFactory.make("playbin", "playbin")
         self.fakesink = Gst.ElementFactory.make("fakesink", "fakesink")
         self.playbin.set_property("video-sink", self.fakesink)
@@ -22,7 +20,7 @@ class Player:
         self.status = Gst.State.READY
         self.current = None
         self.duration = 0
-
+        
         bus = self.playbin.get_bus()
         bus.add_signal_watch()
         bus.connect("message", self.bus_call)
@@ -32,22 +30,31 @@ class Player:
         self.currentIndex = 0
         self.loop = GLib.MainLoop()
 
+
+    def cust_func(self):
+        #  Custom function can be redefined to run in bus_call during playback
+        #  So that next song will play automatically when end of stream
+        pass
+
+
     # This is used to check the status of the file being played
     def bus_call(self, bus, message):
         t = message.type
+
         if t == Gst.MessageType.EOS:
             sys.stdout.write("End-of-stream\n")
             self.changeState(Gst.State.NULL)
-            # PLays next song in cli
-            if(self.cli):
-                self.cliPlay()
+
+            self.cust_func()
+        
+
         elif t == Gst.MessageType.ERROR:
             err, debug = message.parse_error()
             print("Error While Playing: ", err)
             self.changeState(Gst.State.NULL)
-            # plays next song in cli
-            if(self.cli):
-                self.cliPlay()
+        
+            self.cust_func()
+
 
     def setUri(self, uri):
         self.changeState(Gst.State.NULL)
@@ -68,16 +75,17 @@ class Player:
         self.status = state
 
     def getDuration(self):
-        success, self.duration = self.playbin.query_duration(Gst.Format.TIME)
+        return self.playbin.query_duration(Gst.Format.TIME)
 
-    def prev(self):
-        pass
+    def getPosition(self):
+        return self.playbin.query_position(Gst.Format.TIME)
 
     def seek(self, location):
         self.playbin.seek_simple(Gst.Format.TIME,  Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT, location * Gst.SECOND)
 
     def validateUri(self, uri):
         return Gst.uri_is_valid(uri)
+
 
 # Cli methods only called in cli mode
     def cliPlay(self):
@@ -103,7 +111,7 @@ class Player:
 
 def main(args):
     player = Player()
-    player.cli = True
+    player.cust_func = player.cliPlay  # This is done to play the next song automatically when end-of-stream
     try:
         player.playlist = args[1:]
         if(len(player.playlist) == 0):
