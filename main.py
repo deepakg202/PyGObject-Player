@@ -37,13 +37,14 @@ class PlayerUI:
         nextBtn = builder.get_object("nextBtn")
         prevBtn = builder.get_object("prevBtn")
         
-
         # playlist
         self.playlistBox = builder.get_object("playlist")
 
         # headerbar
         self.headerBar = builder.get_object("headerBar")
 
+        # PlayArea
+        self.playArea = builder.get_object("playArea")
 
         # slider seeker
         self.seeker = builder.get_object("seeker")
@@ -58,6 +59,7 @@ class PlayerUI:
         # UI 
         window.set_title("PyGObject Player")
         
+
         # Connect Signals Here
         # window signals
         window.connect("destroy", self.onDestroy)
@@ -74,11 +76,30 @@ class PlayerUI:
 
         self.sliderHandlerId = self.seeker.connect("value-changed", self.onSliderSeek)
         
-        # misc
+        self.playArea.connect("draw", self.onDraw)
+
         
+        #  used for connecting video to application
+        # self.player.bus.enable_sync_message_emission()
+        # self.player.bus.connect("sync-message::element", self.onSyncMessage)
+
+
         # show window and initialize player gui
         window.show()
         Gtk.main()
+
+
+
+    def onSyncMessage(self, bus, message):
+        # print(dir(message))
+        if message.get_structure() is None:
+            return False
+
+
+
+    def onDraw(self, area, ctx):
+        pass
+
 
     # Used to select next or prev media 
     def cust_func(self, next=True): 
@@ -93,9 +114,6 @@ class PlayerUI:
                 currentIndex += 1
             else:
                 currentIndex -= 1
-
-
-
         self.playlistBox.select_row(playlist[currentIndex])
         # calling the signal handler manually
         self.onSelectionActivated(self.playlistBox, playlist[currentIndex])
@@ -129,33 +147,35 @@ class PlayerUI:
         if self.player.status != Gst.State.PLAYING:
             return False  # cancel timeout
         else:
-            success, duration = self.player.getDuration()
-            d = float(duration) / Gst.SECOND
-            if not success:
-                print("Error Occured when fetching duration")
-                return False
-            else:
-                self.seeker.set_range(0, d)
-            #fetching the position, in nanosecs
-            success, position = self.player.getPosition()
             
-            if not success:
-                print("Couldn't fetch current song position to update slider")
-                return False
-                            
-            # converts to seconds
-            
-            p = float(position) / Gst.SECOND
+            try:
+                success, duration = self.player.getDuration()
+                d = float(duration) / Gst.SECOND
+                if not success:
+                    Exception("Error Occured when fetching duration")
+                else:
+                    self.seeker.set_range(0, d)
+                #fetching the position, in nanosecs
+                success, position = self.player.getPosition()
+                
+                if not success:
+                    Exception("Couldn't fetch current song position to update slider")
+                                
+                # converts to seconds
+                p = float(position) / Gst.SECOND
 
-            durationToShow = str(time.strftime("%M:%S", time.gmtime(d)))
-            postionToShow = str(time.strftime("%M:%S", time.gmtime(p)))
-            self.durationText.set_label(postionToShow+"/"+durationToShow)
+                durationToShow = str(time.strftime("%H:%M:%S", time.gmtime(d)))
+                postionToShow = str(time.strftime("%H:%M:%S", time.gmtime(p)))
+                self.durationText.set_label(postionToShow+"/"+durationToShow)
 
-            # block seek handler so we don't seek when we set_value() or else audio will break
-            self.seeker.handler_block(self.sliderHandlerId)
-            self.seeker.set_value(p)
-            self.seeker.handler_unblock(self.sliderHandlerId)
-            
+                # block seek handler so we don't seek when we set_value() or else audio will break
+                self.seeker.handler_block(self.sliderHandlerId)
+                self.seeker.set_value(p)
+                self.seeker.handler_unblock(self.sliderHandlerId)
+ 
+            except Exception as e:
+                print(e)
+
             return True  # continue calling every SLIDER_REFRESH milliseconds
 
     

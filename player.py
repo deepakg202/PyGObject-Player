@@ -1,6 +1,7 @@
 import gi
 import sys
 gi.require_version('Gst', '1.0')
+gi.require_version('GstVideo', '1.0')
 from gi.repository import Gst, GLib
 
 
@@ -11,23 +12,24 @@ class Player:
         Gst.init(None)
 
         self.playbin = Gst.ElementFactory.make("playbin", "playbin")
-        self.fakesink = Gst.ElementFactory.make("fakesink", "fakesink")
-        self.playbin.set_property("video-sink", self.fakesink)
-        if not self.playbin or not self.fakesink:
-            sys.stderr.write("'playbin' or 'fakesink' gstreamer plugin missing\n")
+        gtksink = Gst.ElementFactory.make("gtksink", "gtksink")
+
+        self.playbin.set_property("video-sink", gtksink)
+        if not self.playbin:
+            sys.stderr.write("'playbin' gstreamer plugin missing\n")
             sys.exit(1)
         self.playbin.set_state(Gst.State.READY)
         self.status = Gst.State.READY
-        self.current = None
-        self.duration = 0
         
-        bus = self.playbin.get_bus()
-        bus.add_signal_watch()
-        bus.connect("message", self.bus_call)
+        self.bus = self.playbin.get_bus()
+        self.bus.add_signal_watch()
+        self.bus.connect("message", self.bus_call)
 
+       
         # This are only used in the command line and not for gtk app
         self.playlist = []
         self.currentIndex = 0
+        self.current = None
         self.loop = GLib.MainLoop()
 
 
@@ -47,7 +49,6 @@ class Player:
 
             self.cust_func()
         
-
         elif t == Gst.MessageType.ERROR:
             err, debug = message.parse_error()
             print("Error While Playing: ", err)
@@ -106,6 +107,7 @@ class Player:
             print("Invalid URI Playing next: ")
             self.cliPlay()
 
+   
 
 # CLI version
 

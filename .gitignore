@@ -1,4 +1,7 @@
 *.mp3
+*.mp4
+*.mkv
+*.glade~
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
