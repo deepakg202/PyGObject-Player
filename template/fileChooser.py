@@ -26,10 +26,10 @@ class FileChooser(Gtk.Window):
         filter_text.add_mime_type("audio/mpeg")
         dialog.add_filter(filter_text)
 
-        filter_any = Gtk.FileFilter()
-        filter_any.set_name("Any files")
-        filter_any.add_pattern("*")
-        dialog.add_filter(filter_any)
+        # filter_any = Gtk.FileFilter()
+        # filter_any.set_name("Any files")
+        # filter_any.add_pattern("*")
+        # dialog.add_filter(filter_any)
 
     def onSelect(self, dialog):
         self.selected = dialog.get_filenames()
