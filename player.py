@@ -1,7 +1,6 @@
 import gi
 import sys
 gi.require_version('Gst', '1.0')
-gi.require_version('GstVideo', '1.0')
 from gi.repository import Gst, GLib
 
 
@@ -11,10 +10,9 @@ class Player:
     def __init__(self):
         Gst.init(None)
 
-        self.playbin = Gst.ElementFactory.make("playbin", "playbin")
-        gtksink = Gst.ElementFactory.make("gtksink", "gtksink")
+        # custom playbin pipeline
+        self.playbin = Gst.parse_launch("playbin")
 
-        self.playbin.set_property("video-sink", gtksink)
         if not self.playbin:
             sys.stderr.write("'playbin' gstreamer plugin missing\n")
             sys.exit(1)
@@ -42,7 +40,6 @@ class Player:
     # This is used to check the status of the file being played
     def bus_call(self, bus, message):
         t = message.type
-
         if t == Gst.MessageType.EOS:
             sys.stdout.write("End-of-stream\n")
             self.changeState(Gst.State.NULL)

@@ -47,21 +47,26 @@
             <property name="position">130</property>
             <property name="position_set">True</property>
             <child>
-              <object class="GtkListBox" id="playlist">
+              <object class="GtkScrolledWindow">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="activate_on_single_click">False</property>
-                <child type="placeholder">
-                  <object class="GtkLabel">
+                <property name="can_focus">True</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkViewport">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Add Media First</property>
+                    <child>
+                      <object class="GtkListBox" id="playlist">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
               <packing>
                 <property name="resize">False</property>
-                <property name="shrink">False</property>
+                <property name="shrink">True</property>
               </packing>
             </child>
             <child>
@@ -93,9 +98,13 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkDrawingArea" id="playArea">
+                  <object class="GtkBox" id="playArea">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <placeholder/>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">True</property>

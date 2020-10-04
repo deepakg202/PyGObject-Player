@@ -2,13 +2,13 @@ import gi
 import sys
 gi.require_version("Gtk", "3.0")
 gi.require_version('Gst', '1.0')
-from gi.repository import Gtk, Gst, GLib
+gi.require_version('GstVideo', '1.0')
+from gi.repository import Gtk, Gst, GLib, GstVideo
 from pathlib import Path
 
 from player import Player
 # Python templates
 from template.fileChooser import FileChooser
-
 
 import time
 
@@ -27,6 +27,11 @@ class PlayerUI:
         self.player = Player()
         self.player.cust_func = self.cust_func # Changing the custom function to use when media ends or reports error
 
+        # adding gtksink to pipeline for video output
+        self.gtksink = Gst.ElementFactory.make("gtksink")
+
+        self.player.playbin.set_property("video-sink", self.gtksink)
+
         # search for the widget with id
         # main window
         window = builder.get_object("window")
@@ -44,7 +49,12 @@ class PlayerUI:
         self.headerBar = builder.get_object("headerBar")
 
         # PlayArea
-        self.playArea = builder.get_object("playArea")
+        playArea = builder.get_object("playArea")
+        playArea.add(self.gtksink.props.widget)
+        self.gtksink.props.widget.set_hexpand(True)
+        self.gtksink.props.widget.set_vexpand(True)
+        
+       
 
         # slider seeker
         self.seeker = builder.get_object("seeker")
@@ -75,13 +85,10 @@ class PlayerUI:
         self.playlistBox.connect("row-activated", self.onSelectionActivated)
 
         self.sliderHandlerId = self.seeker.connect("value-changed", self.onSliderSeek)
-        
-        self.playArea.connect("draw", self.onDraw)
-
-        
-        #  used for connecting video to application
-        # self.player.bus.enable_sync_message_emission()
-        # self.player.bus.connect("sync-message::element", self.onSyncMessage)
+      
+        # used for connecting video to application (Not Used as of now)
+        self.player.bus.enable_sync_message_emission()
+        self.player.bus.connect("sync-message::element", self.onSyncMessage)
 
 
         # show window and initialize player gui
@@ -91,13 +98,7 @@ class PlayerUI:
 
 
     def onSyncMessage(self, bus, message):
-        # print(dir(message))
-        if message.get_structure() is None:
-            return False
-
-
-
-    def onDraw(self, area, ctx):
+        
         pass
 
 
@@ -189,6 +190,7 @@ class PlayerUI:
             print("Select Songs First")
         elif(self.player.status != Gst.State.PLAYING):
             self.player.play()
+            self.gtksink.props.widget.show()
             GLib.timeout_add(SLIDER_REFRESH, self.refreshSlider)
         else:
             self.player.pause()
@@ -214,6 +216,7 @@ class PlayerUI:
     def onStop(self, button=None):
         self.player.changeState(Gst.State.NULL)
         self.seeker.set_value(0)
+        self.gtksink.props.widget.hide()
         self.refreshIcons()
     def onPrev(self, button=None):
         if not self.playlistBox.get_selected_row():
@@ -225,6 +228,7 @@ class PlayerUI:
             print("Select Songs First")
         else:
             self.cust_func(next=True)
+
 
 
 def main(args):
