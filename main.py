@@ -61,6 +61,8 @@ class PlayerUI:
         self.durationText = builder.get_object("duration")
 
 
+        self.volumeBar = builder.get_object("volume")
+        self.volumeBar.set_value(self.player.getVolume())
         # icons
         self.playIco = builder.get_object("playIco")
         self.pauseIco = builder.get_object("pauseIco")
@@ -79,6 +81,7 @@ class PlayerUI:
         prevBtn.connect("clicked", self.onPrev)
         stopBtn.connect("clicked", self.onStop)
 
+        self.volumeBar.connect("value-changed", self.changeVolume)
 
         chooserBtn.connect("clicked", self.onChooseClick)
 
@@ -98,7 +101,7 @@ class PlayerUI:
 
 
     def onSyncMessage(self, bus, message):
-        
+
         pass
 
 
@@ -229,6 +232,8 @@ class PlayerUI:
         else:
             self.cust_func(next=True)
 
+    def changeVolume(self, widget, val):
+        self.player.setVolume(val)
 
 
 def main(args):

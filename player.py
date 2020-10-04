@@ -72,6 +72,15 @@ class Player:
         self.playbin.set_state(state)
         self.status = state
 
+    def getVolume(self):
+        return self.playbin.get_property("volume")
+
+    def setVolume(self, vol):
+        # mapping vol from 0-1.0 to 0-10.0 but not required as audio will not be clear
+        # vol = (vol)/(1.0)*(10.0)
+        self.playbin.set_property("volume", vol)
+
+
     def getDuration(self):
         return self.playbin.query_duration(Gst.Format.TIME)
 
