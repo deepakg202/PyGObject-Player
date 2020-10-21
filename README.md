@@ -1,5 +1,7 @@
 # PyGObject Player
 
+Install Python3 first
+
 ## Requirements for running in Windows
 
 1. Go to http://www.msys2.org/ and download the x86_64 installer
@@ -11,5 +13,9 @@
 
 ---
 
-I have not tested it on linux but the packages described above should be installed (without the `mingw-w64-x86_64-` part) using the package manager and it should probably work.
+## Requirements for running in Linux (Tested in Debian)
+1. Open terminal and execute `sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0`
+2. Execute `sudo apt install python3-gst-1.0`
+3. Execute `sudo apt install gstreamer1.0-gtk3 gstreamer1.0-plugins-good`
+4. Execute `python3 main.py` for GUI or `python3 player.py <paths to media as arguments>` for command line 
 
