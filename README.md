@@ -1,8 +1,6 @@
 # PyGObject Player
 
-Install Python3 first
-
-# # Screenshots
+# Screenshots
 
 ![demo](./screenshots/1.png)
 
